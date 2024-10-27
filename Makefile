@@ -1,6 +1,6 @@
 # Compiler and flags
-FC = gfortran
-flag = -O0 -r16 -g -fbacktrace -fbounds-check -ffpe-trap=zero,overflow,underflow -Wcharacter-truncation -Wsurprising -Waliasing -Wunused-parameter -fopenmp -ftree-parallelize-loops=10
+FC = gfortran -fopenmp
+flag = -O0 -fbounds-check -mcmodel=large -r16 -g -fbacktrace -fbounds-check -ffpe-trap=zero,overflow,underflow -Wcharacter-truncation -Wsurprising -Waliasing -Wunused-parameter 
 
 
 # Library paths (adjust these if the libraries are in non-standard locations)

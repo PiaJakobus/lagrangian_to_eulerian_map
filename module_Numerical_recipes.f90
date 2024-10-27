@@ -55,11 +55,11 @@ CONTAINS
     
     err = trace(1,1) + trace(2,2) + trace(3,3) + trace(4,4) - 4d0
     IF ((info /= 0) .OR. (ABS(err) > 0.001)) THEN
-      !print*, "SVD --> ", ABS(err)
-      !call dgesvd('All','All',m,n,A,lda,s,u,ldu,vt,ldvt,work,lwork,info)
+      print*, "SVD --> ", ABS(err)
+      call dgesvd('All','All',m,n,A,lda,s,u,ldu,vt,ldvt,work,lwork,info)
       DO i = 1, size(A,1)
         DO j = 1,size(A,1)
-          IF (s(i) >= 1e-25) THEN
+          IF (s(i) >= 1e-23) THEN
             tmp(i,j) = vt(i,j) * (1d0/s(i))
           ELSE
             tmp(j,i) = 0d0

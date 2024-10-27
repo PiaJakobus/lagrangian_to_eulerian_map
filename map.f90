@@ -328,22 +328,25 @@ END MODULE set_up
 
 PROGRAM main
   USE set_up
+  USE OMP_LIB
   IMPLICIT NONE
-  INTEGER, PARAMETER :: ni = 18, N = ni**3, rdim = 3, ni_grid = 14, N_grid = ni_grid**3
-  INTEGER, PARAMETER :: INT_param = NN3D_cub
+  INTEGER, PARAMETER :: ni = 18, N = ni**3, rdim = 3, ni_grid = 30, N_grid = ni_grid**3
+  INTEGER, PARAMETER :: INT_param = NN3D_lin
   DOUBLE PRECISION, PARAMETER :: border = 0.9d0, border_g = 0.5d0
   DOUBLE PRECISION, PARAMETER :: dx_g = 2d0 * border_g / (REAL(ni_grid) - 1d0)
   DOUBLE PRECISION, PARAMETER :: dx = 2d0 * border / (REAL(ni) - 1d0)
   DOUBLE PRECISION, PARAMETER :: fac = 0.01d0!, dx_g = 2d0
-  DOUBLE PRECISION :: r_particles(rdim,N), r2(N), r(rdim), r_G(rdim), r_grid(rdim,N_grid), fp(N), f_grid
+  DOUBLE PRECISION :: r(rdim), r_G(rdim), f_grid
   DOUBLE PRECISION :: moment_matrix(INT_param,INT_param), B(INT_param), beta(INT_param), A_inv(INT_param,INT_param)
-  DOUBLE PRECISION :: w(rdim,N), f_analytic(1), error 
+  DOUBLE PRECISION :: f_analytic(1), error 
   DOUBLE PRECISION :: P_i(INT_param), h, h_g
-  INTEGER, PARAMETER :: p_max = 301
+  INTEGER, PARAMETER :: p_max = 31
   INTEGER :: i
   DOUBLE PRECISION :: T1, T2
-  print*, "test"
-  OPEN(unit=97, file = "error_cub.dat", status = 'unknown', action = 'write')
+  DOUBLE PRECISION, ALLOCATABLE:: w(:), r_particles(:,:), r_grid(:,:), fp(:), r2(:)
+  ALLOCATE(r_particles(rdim,N),r_grid(rdim,N_grid),fp(N),r2(N),w(N))
+
+  OPEN(unit=97, file = "error_quad.dat", status = 'unknown', action = 'write')
   !OPEN(unit=97, file = "error_lin.dat", status = 'unknown', action = 'write')
   !OPEN(unit=97, file = "error_quad.dat", status = 'unknown', action = 'write')
   OPEN(unit=99, file = "particles.dat", status = 'unknown', action = 'write')
@@ -360,7 +363,14 @@ PROGRAM main
   print*, "=================================================="
   CALL generate_particles(r_particles,fp,rdim,N,border,ni,fac)
   CALL generate_grid(r_grid,rdim,N_grid,border_g,ni_grid)
-  CALL cpu_time(t1)
+  !CALL cpu_time(t1)
+T1 = OMP_GET_WTIME()
+  CALL OMP_SET_NUM_THREADS(6)
+
+!$OMP PARALLEL DO DEFAULT(NONE) & 
+!$OMP& PRIVATE(i,r2,r_G,r,h,w,B,P_i,A_inv, moment_matrix,beta,f_grid,f_analytic,error) &
+!$OMP& SHARED(r_grid, fp, r_particles)
+!OMP PARALLEL DO DEFAULT(PRIVATE) SHARED(r_grid,fp,r_particles)
   DO i = 1, N_grid
     r_G = r_grid(:,i)
     r = r_G
@@ -372,9 +382,11 @@ PROGRAM main
     CALL particle_distr(r,f_analytic,rdim,1)
     error = ABS(f_grid - f_analytic(1)) / f_analytic(1) 
     WRITE(97, *) r, error 
-    print*, "INDEX: ",i, "f_grid", f_grid, "f_analytic", f_analytic, "error: ", error
+    print*, "thread: ", omp_get_thread_num(), "INDEX: ",i, "f_grid", f_grid, "f_analytic", f_analytic, "error: ", error
   END DO 
-  CALL cpu_time(t2)
+!$OMP END PARALLEL DO 
+T2 = OMP_GET_WTIME()
+  !CALL cpu_time(t2)
   print*, "======================="
   print*, "time", T2-T1
   print*, "======================="
@@ -384,4 +396,5 @@ PROGRAM main
   END DO
   CLOSE(99)
   CLOSE(97)
+  DEALLOCATE(r_particles,r_grid,fp,r2,w)
 END PROGRAM main
