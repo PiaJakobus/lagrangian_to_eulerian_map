@@ -11,7 +11,7 @@ flag = -O0 -fbounds-check -mcmodel=large -r16 -g -fbacktrace -fbounds-check -ffp
 #LIBS = -L$(LAPACK_PATH) -llapack -L$(BLAS_PATH) -lblas
 LIBS = -llapack -lblas
 
-SRC = module_MLS.f90 module_Numerical_recipes.f90 map.f90
+SRC = module_constants.f90 module_Numerical_recipes.f90 module_LRE.f90 module_kernel.f90 module_set_up.f90 IO.f90 main.f90
 
 
 # Object files (replace .f90 with .o)
@@ -33,7 +33,7 @@ $(EXEC): $(OBJ)
 
 # Clean the build directory
 clean:
-	rm -f $(OBJ) $(EXEC)
+	rm -f $(OBJ) $(EXEC) *.mod
 
 .PHONY: all clean
 
