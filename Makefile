@@ -12,9 +12,9 @@ flag = -O0 -fbounds-check -mcmodel=large -r16 -g -fbacktrace -fbounds-check \
 #LIBS = -L$(LAPACK_PATH) -llapack -L$(BLAS_PATH) -lblas
 LIBS = -llapack -lblas
 
-SRC = module_constants.f90 module_Numerical_recipes.f90 module_LRE.f90 module_kernel.f90 \
+SRC = module_constants.f90 module_Numerical_recipes.f90 module_kernel.f90 module_LRE.f90  \
 			module_set_up.f90 IO.f90 module_units.f90 module_constants.f90 module_reading_dep.f90 \
-			module_input_output.f90 main.f90
+			module_input_output.f90 module_projection.f90 main_sphincs.f90
 
 
 # Object files (replace .f90 with .o)

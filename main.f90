@@ -13,7 +13,7 @@ PROGRAM main
   DOUBLE PRECISION, PARAMETER :: border = 0.9d0, border_g = 0.5d0
   DOUBLE PRECISION, PARAMETER :: dx_g = 2d0 * border_g / (REAL(ni_grid) - 1d0)
   DOUBLE PRECISION, PARAMETER :: dx = 2d0 * border / (REAL(ni) - 1d0)
-  DOUBLE PRECISION, PARAMETER :: fac = 0.01d0!, dx_g = 2d0
+  DOUBLE PRECISION, PARAMETER :: fac = 0.0d0!, dx_g = 2d0
   DOUBLE PRECISION :: r(rdim), r_G(rdim), f_grid
   DOUBLE PRECISION :: moment_matrix(INT_param,INT_param), B(INT_param), beta(INT_param), A_inv(INT_param,INT_param)
   DOUBLE PRECISION :: f_analytic(1), error 
@@ -44,8 +44,9 @@ PROGRAM main
   T1 = OMP_GET_WTIME()
   CALL OMP_SET_NUM_THREADS(6)
   CALL read_SPHINCS_dump(namefile)
+  print*, pos_u(1,:)
 
-  stop
+  !stop
 !$OMP PARALLEL DO DEFAULT(NONE) & 
 !$OMP& PRIVATE(i,r2,r_G,r,h_smooth,w,B,P_i,A_inv, moment_matrix,beta,f_grid,f_analytic,error) &
 !$OMP& SHARED(r_grid, fp, r_particles)

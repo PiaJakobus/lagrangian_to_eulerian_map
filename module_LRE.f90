@@ -1,4 +1,5 @@
 MODULE LRE
+  USE KERNEL, ONLY : Wendland_C6_3D, kernel_WC6
 
   !********************************************
   !                                           *
@@ -76,7 +77,7 @@ MODULE LRE
   
   CONTAINS
 
-     SUBROUTINE assemble_moment_matrix(N,INT_param,moment_matrix,P_i,w,rp,r_G,rdim)
+     PURE SUBROUTINE assemble_moment_matrix(N,INT_param,moment_matrix,rp,r_G,rdim,h)
 
     !********************************************
     !                                           * 
@@ -97,11 +98,17 @@ MODULE LRE
     !********************************************
 
     INTEGER, INTENT(IN) :: INT_param, N, rdim
-    DOUBLE PRECISION, INTENT(IN) :: rp(rdim, N), r_G(rdim), w(N)
-    DOUBLE PRECISION, INTENT(INOUT) :: moment_matrix(INT_param, INT_param), P_i(INT_param)
-    INTEGER :: i,p,k
+    DOUBLE PRECISION, INTENT(IN) :: rp(rdim, N), r_G(rdim), h(N)
+    DOUBLE PRECISION, INTENT(OUT) :: moment_matrix(INT_param, INT_param)
+    DOUBLE PRECISION :: P_i(INT_param), w
+    DOUBLE PRECISION :: pos_ab(rdim), q
+    INTEGER :: i,p,k, zaehler
     moment_matrix = 0d0
     DO p = 1, N
+      pos_ab = ABS(rp(:,p) - r_G) 
+      q = 0.5D0 * SQRT(pos_ab(1)**2d0 + pos_ab(2)**2d0 + pos_ab(3)**2d0) / h(p) 
+      CALL Wendland_C6_3D(q,w,zaehler)
+ 
       IF (INT_param == NN3D_quad) THEN 
         CALL get_base3D_quad(rp(:,p),r_G,P_i)
       ELSE IF (INT_param == NN3D_lin) THEN 
@@ -114,13 +121,13 @@ MODULE LRE
       DO k = 1, INT_param
         DO i = 1, INT_param
           !CALL kernel(w,rdim,h,r_G,rp(:,p))
-          moment_matrix(i,k) = moment_matrix(i,k) + P_i(i) * P_i(k) * w(p)
+          moment_matrix(i,k) = moment_matrix(i,k) + P_i(i) * P_i(k) * w
         END DO
       END DO
     END DO
   END SUBROUTINE assemble_moment_matrix
 
-  SUBROUTINE get_vector_b(B,fp,P_i,N,w,rp,r_G,rdim,INT_param)
+  PURE SUBROUTINE get_vector_b(B,fp,N,rp,r_G,rdim,INT_param,h)
 
     !********************************************
     !                                           *
@@ -139,10 +146,18 @@ MODULE LRE
 
     INTEGER :: k,p
     INTEGER, intent(IN) :: N, rdim, INT_param
-    DOUBLE PRECISION, INTENT(IN) :: rp(rdim,N), r_G(rdim), fp(N), w(N)
-    DOUBLE PRECISION, INTENT(INOUT) :: B(INT_param),P_i(INT_param)
+    DOUBLE PRECISION, INTENT(IN) :: rp(rdim,N), r_G(rdim), fp(N), h(N)
+    DOUBLE PRECISION, INTENT(OUT) :: B(INT_param)
+    DOUBLE PRECISION :: P_i(INT_param), w
+    DOUBLE PRECISION :: q, pos_ab(rdim)
+    INTEGER :: zaehler 
+    zaehler = 0 
     B = 0.
     DO p = 1, N
+      pos_ab = (rp(:,p) - r_G) 
+      q = 0.5D0 * SQRT(pos_ab(1)**2d0 + pos_ab(2)**2d0 + pos_ab(3)**2d0) / h(p)
+      CALL Wendland_C6_3D(q,w,zaehler)
+      !CALL kernel_WC6(v,w,zaehler)
       IF (INT_param == NN3D_lin) THEN 
         CALL get_base3D_lin(rp(:,p),r_G,P_i)
         !CALL kernel(w,rdim,h,r_G,rp(:,p))
@@ -154,13 +169,32 @@ MODULE LRE
         P_i = (/1d0/)
       END IF 
       DO k = 1, INT_param
-          B(k) = B(k) + fp(p) * P_i(k) * w(p)
+          B(k) = B(k) + fp(p) * P_i(k) * w 
       END DO
    END DO 
+   !print*, ":::::::::::::: particles: ", zaehler 
   END SUBROUTINE
+  
+  PURE SUBROUTINE standard_SPH(fp,N,rp,r_G,rdim,h,rho,m,f_grid)
+    INTEGER, INTENT(IN) :: N, rdim
+    DOUBLE PRECISION, INTENT(IN) :: fp(N), rho(N), m(N), rp(rdim,N), r_G(rdim),h(N)
+    DOUBLE PRECISION, INTENT(OUT) :: f_grid
+    DOUBLE PRECISION :: w, q, pos_ab(rdim), norm, omega
+    INTEGER :: p, zaehler
+    norm = 0d0
+    f_grid = 0d0
+    DO p = 1, N
+      pos_ab = (rp(:,p) - r_G)
+      q = 0.5D0 * SQRT(pos_ab(1)**2d0 + pos_ab(2)**2d0 + pos_ab(3)**2d0) / h(p)
+      CALL Wendland_C6_3D(q,w,zaehler)
+      omega = (m(p) / rho(p)) * w
+      norm = norm + omega 
+      f_grid = f_grid + omega * fp(p)
+    END DO 
+    f_grid = f_grid / norm 
+  END SUBROUTINE standard_SPH
 
-
-  SUBROUTINE algebra(r,r_G,rdim,INT_param,A_inv,moment_matrix,B,beta,f_grid)
+  SUBROUTINE algebra(r,r_G,rdim,INT_param,moment_matrix,B,f_grid)
 
     !********************************************
     !                                           * 
@@ -177,13 +211,18 @@ MODULE LRE
 
     INTEGER, INTENT(IN) :: INT_param, rdim
     DOUBLE PRECISION, INTENT(IN) :: r(rdim), r_G(rdim), B(INT_param)
-    DOUBLE PRECISION, INTENT(INOUT) :: moment_matrix(INT_param, INT_param)
+    DOUBLE PRECISION, INTENT(IN) :: moment_matrix(INT_param, INT_param)
+    DOUBLE PRECISION, INTENT(OUT) :: f_grid
     DOUBLE PRECISION :: pl(INT_param)
-    DOUBLE PRECISION, INTENT(INOUT) :: A_inv(INT_param,INT_param), f_grid, beta(INT_param)
+    DOUBLE PRECISION :: A_inv(INT_param,INT_param), beta(INT_param)
     f_grid = 0d0
     A_inv = 0d0
     IF (INT_param == NN3D_1d) THEN
-      A_inv = 1d0 / moment_matrix
+      IF (ABS(moment_matrix(1,1)) > 0d0) THEN 
+        A_inv = 1d0 / moment_matrix
+      ELSE
+        A_inv = 0d0 
+      END IF 
     ELSE 
       A_inv = inv(moment_matrix)
     END IF
@@ -214,7 +253,7 @@ MODULE LRE
   END SUBROUTINE get_base3D_1d
 
 
-  SUBROUTINE get_base3D_lin(pos,pos0,bases_3D_lin)
+  PURE SUBROUTINE get_base3D_lin(pos,pos0,bases_3D_lin)
 
     !*****************************************
     !                                        *
@@ -234,7 +273,7 @@ MODULE LRE
   END SUBROUTINE get_base3D_lin
 
   
-  SUBROUTINE get_base3D_quad(pos,pos0,bases_3D_quad)
+  PURE SUBROUTINE get_base3D_quad(pos,pos0,bases_3D_quad)
 
     !********************************************
     !                                           *
@@ -269,7 +308,7 @@ MODULE LRE
   END SUBROUTINE get_base3D_quad
 
 
-  SUBROUTINE get_base3D_cubic(pos,pos0,bases_3D_cubic)
+  PURE SUBROUTINE get_base3D_cubic(pos,pos0,bases_3D_cubic)
 
     !****************************************
     !                                       *
@@ -321,7 +360,7 @@ MODULE LRE
     
   END SUBROUTINE get_base3D_cubic
   
-  SUBROUTINE get_base3D_MLS_cubic(pos,pos0,bases_3D_cubic)
+  PURE SUBROUTINE get_base3D_MLS_cubic(pos,pos0,bases_3D_cubic)
 
     !****************************************
     !                                       *
