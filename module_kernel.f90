@@ -110,16 +110,16 @@ SUBROUTINE get_h(r2, r_particles, r, p_max, h, rdim, N)
 
     ! so that support is 2.*h
     !r=    0.5D0*v
-    IF(q < 1.D0)THEN
+    !IF(q < 1.D0)THEN
        zaehler = zaehler + 1 
        q2=       q * q 
        q3=       q2*q
        pref=     (1.0D0 - q)**8
        brac=     32.D0*q3 + 25.D0*q2 +  8.D0*q + 1.D0
        W=        pref*brac
-    ELSE
-       W=        0.D0
-    ENDIF
+    !ELSE
+    !   W=        0.D0
+    !ENDIF
     norm= norm_3D
     W=    norm*W
   END SUBROUTINE Wendland_C6_3D

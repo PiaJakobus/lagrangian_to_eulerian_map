@@ -18,6 +18,7 @@ MODULE SET_UP
   !**********************************************
 
   USE NR
+  USE CONSTANTS
   IMPLICIT NONE 
   CONTAINS
 
@@ -77,9 +78,13 @@ MODULE SET_UP
     DOUBLE PRECISION, INTENT(OUT) :: rp(rdim, N), fp(N)  ! Particle positions and properties
     DOUBLE PRECISION :: range_(ni), rand(rdim)            ! Grid range and random values
     DOUBLE PRECISION, INTENT(IN) :: border, fac          ! Grid boundary and noise factor
+    DOUBLE PRECISION :: range_x(ni),range_y(ni),range_z(ni)
 
     p = 0
-    range_ = linspace(-border, border, ni)  ! Create evenly spaced points within the boundary
+    !range_ = linspace(-border,border, ni)  ! Create evenly spaced points within the boundary
+    range_x = linspace(-250.d0,10.d0,ni)
+    range_z = linspace(-5.d0,5.d0,ni)
+    range_y = linspace(-170.d0,60.d0,ni)
 
     DO i = 1, ni
       DO j = 1, ni
@@ -88,9 +93,9 @@ MODULE SET_UP
           rand = (rand - 0.5d0 * border)  ! Center random noise around zero
           p = p + 1
           ! Assign particle positions with added noise
-          rp(1, p) = range_(i) + fac * rand(1)
-          rp(2, p) = range_(j) + fac * rand(2)
-          rp(3, p) = range_(k) + fac * rand(3)
+          rp(1, p) = range_x(i) + fac * rand(1)
+          rp(2, p) = range_y(j) + fac * rand(2)
+          rp(3, p) = range_z(k) + fac * rand(3)
         END DO
       END DO
     END DO
@@ -120,9 +125,14 @@ MODULE SET_UP
     DOUBLE PRECISION, INTENT(IN) :: border
     DOUBLE PRECISION, INTENT(OUT) :: x_grid(rdim,N_grid)
     DOUBLE PRECISION :: range_(ni_grid)  ! Grid points and range array
+    DOUBLE PRECISION :: range_x(ni_grid), range_y(ni_grid), range_z(ni_grid)
     INTEGER :: i, j, k, ig  ! Loop indices and grid point counter
 
     range_ = linspace(-border, border, ni_grid)  ! Create evenly spaced grid points within boundary
+    range_x = linspace(-150.d0,150.d0,ni_grid)
+    range_z = linspace(-5.d0,5.d0,ni_grid)
+    range_y = linspace(-270.d0,60.d0,ni_grid)
+
 
     ! If ni_grid is 1, set range to zero (single point)
     IF (ni_grid == 1) THEN
@@ -130,18 +140,105 @@ MODULE SET_UP
     END IF 
 
     ig = 0  ! Initialize grid point counter
-    !DO i = 1, ni_grid
+    DO i = 1, ni_grid
       DO j = 1, ni_grid
         DO k = 1, ni_grid
           ig = ig + 1
           ! Assign grid points based on range
-          x_grid(1, ig) = range_(k)
-          x_grid(2, ig) = range_(j)
-          x_grid(3, ig) = 0.D0!range_(i)
+          x_grid(1, ig) = range_x(k)
+          x_grid(2, ig) = range_y(j)
+          x_grid(3, ig) = range_z(i)
         END DO
       END DO
-    !END DO
+    END DO
   END SUBROUTINE generate_grid
+
+  SUBROUTINE generate_polar(x_grid, rdim, N_grid, border_r, ni_grid_r,ni_grid_th,ni_grid_ph)
+
+    !***************************************
+    !                                      * 
+    ! Setup Cartesian grid for simulations * 
+    ! Generates grid points within a       *
+    ! defined boundary.                    *
+    !                                      *
+    ! Inputs:                              *
+    !   - rdim: Number of dimensions       *
+    !   - N_grid: Number of grid points    *
+    !   - border: Boundary for grid        *
+    !   - ni_grid: Number of intervals     *
+    !     along each axis                  *
+    ! Outputs:                             *
+    !   - x_grid: Grid points (rdim x N_grid) *
+    !***************************************
+
+    INTEGER, INTENT(IN) :: rdim, N_grid, ni_grid_r,ni_grid_ph,ni_grid_th
+    DOUBLE PRECISION, INTENT(IN) :: border_r
+    DOUBLE PRECISION, INTENT(OUT) :: x_grid(rdim,N_grid)
+    DOUBLE PRECISION :: range_r(ni_grid_r) 
+    DOUBLE PRECISION :: range_th(ni_grid_th) 
+    DOUBLE PRECISION :: range_ph(ni_grid_ph) 
+    DOUBLE PRECISION, PARAMETER :: border_th = pi
+    DOUBLE PRECISION, PARAMETER :: border_ph = 2.d0 * pi 
+    INTEGER :: i, j, k, ig  ! Loop indices and grid point counter
+    DOUBLE PRECISION :: dr, dtheta, dphi
+    dr = 250.D0 / (ni_grid_r - 1.D0)
+    dphi = 2.D0 * pi / (ni_grid_ph - 1.D0)
+    dtheta = pi / (ni_grid_th)
+
+    range_r = linspace(dr, border_r, ni_grid_r)  ! Create evenly spaced grid points within boundary
+    range_ph = linspace(0.D0, border_ph-dphi, ni_grid_ph)  ! Create evenly spaced grid points within boundaARY
+    range_th = linspace(0.D0, border_th, ni_grid_th)  ! Create evenly spaced grid points within boundary
+
+    ig = 0  ! Initialize grid point counter
+    DO i = 1, ni_grid_r
+      DO k = 1, ni_grid_ph
+        DO j = 1, ni_grid_th
+          ig = ig + 1
+          ! Assign grid points based on range
+          x_grid(1, ig) = range_r(i)
+          x_grid(2, ig) = range_ph(k)
+          x_grid(3, ig) = range_th(j)
+        END DO
+      END DO
+    END DO
+  END SUBROUTINE generate_polar
+
+
+  SUBROUTINE xy_plane(x_grid, N_grid, border, ni_grid)
+    !***************************************
+    !                                      * 
+    ! Setup Cartesian plane for simulations * 
+    ! Inputs:                              *
+    !   - rdim: Number of dimensions       *
+    !   - N_grid: Number of grid points    *
+    !   - border: Boundary for grid        *
+    !   - ni_grid: Number of intervals     *
+    !     along each axis                  *
+    ! Outputs:                             *
+    !   - x_grid: Grid points (rdim x N_grid) *
+    !***************************************
+
+    INTEGER, INTENT(IN) :: N_grid, ni_grid
+    DOUBLE PRECISION, INTENT(IN) :: border
+    DOUBLE PRECISION, INTENT(OUT) :: x_grid(2,N_grid)
+    DOUBLE PRECISION :: range_(ni_grid)  ! Grid points and range array
+    INTEGER :: j, k, ig  ! Loop indices and grid point counter
+    range_ = linspace(-border, border, ni_grid)  ! Create evenly spaced grid points within boundary
+    ! If ni_grid is 1, set range to zero (single point)
+    IF (ni_grid == 1) THEN
+      range_ = (/0/)
+    END IF 
+    ig = 0  ! Initialize grid point counter
+    DO j = 1, ni_grid
+      DO k = 1, ni_grid
+        ig = ig + 1
+        ! Assign grid points based on range
+        x_grid(1, ig) = range_(k)
+        x_grid(2, ig) = range_(j)
+      END DO
+    END DO
+  END SUBROUTINE xy_plane
+
 
 END MODULE SET_UP
 

@@ -26,7 +26,7 @@ CONTAINS
     ! =========================================================
     integer :: i,j, m,n, lda, ldu, ldvt
     double precision :: s(size(A,1)), u(size(A,1),size(A,2)), trace(size(A,1),size(A,2))
-    double precision :: err, A_save(10,10)
+    double precision :: err, A_save(size(A,1),size(A,2)),B(size(A,1),size(A,2)),sigma_inv(size(A,1),size(A,2))
     double precision :: vt(size(A,1),size(A,2)), tmp(size(A,1),size(A,2))
     integer :: lwork 
     ! =========================================================
@@ -39,8 +39,8 @@ CONTAINS
     ldu = size(A,2)
     ldvt = size(A,2)
  
+    A_save = A 
     Ainv = A
-    A_save = A
     n = size(A,1)
     m = size(A,2)
     lwork = 2*MAX(3*MIN(m,n)+MAX(m,n),5*MIN(m,n))
@@ -52,25 +52,37 @@ CONTAINS
     ! DGETRI computes the inverse of a matrix using the LU factorization
     call dgetri(n, Ainv, n, ipiv, work, n, info)
     trace = MATMUL(A,Ainv)
-    
-    err = trace(1,1) + trace(2,2) + trace(3,3) + trace(4,4) - 4d0
-    IF ((info /= 0) .OR. (ABS(err) > 0.001)) THEN
-      print*, "SVD --> ", ABS(err)
+    err = 0.D0
+    DO i = 1, size(A,1)
+      err = err + trace(i,i)
+    END DO 
+    IF ((info /= 0) .OR. (ABS(err) - size(A,1) > 0.001)) THEN
       call dgesvd('All','All',m,n,A,lda,s,u,ldu,vt,ldvt,work,lwork,info)
+      print*, " ---- SVD ---- "
+      sigma_inv = 0.d0
       DO i = 1, size(A,1)
-        DO j = 1,size(A,1)
-          IF (s(i) >= 1e-23) THEN
-            tmp(i,j) = vt(i,j) * (1d0/s(i))
-          ELSE
-            tmp(j,i) = 0d0
-          END IF 
-        END DO 
+        IF (s(i) >= 1e-9) THEN 
+          sigma_inv(i,i) = 1.D0 / s(i)
+        ELSE 
+          sigma_inv(i,i) = 0.D0
+        END IF 
       END DO 
-      Ainv = MATMUL(tmp, u)
+      B = matmul(transpose(vt), sigma_inv)
+      Ainv = matmul(B, transpose(u))
+      !DO i = 1, size(A,1)
+      !  DO j = 1,size(A,1)
+      !    IF (s(i) >= 1e-23) THEN
+      !      tmp(i,j) = vt(i,j) * (1d0/s(i))
+      !    ELSE
+      !      tmp(j,i) = 0d0
+      !    END IF 
+      !  END DO 
+      !END DO 
+      !Ainv = MATMUL(tmp, u)
    END IF 
-         !if (info /= 0) then
-          !  print*, 'Matrix inversion failed!'
-          ! end if 
+   if (info /= 0) then
+     print*, 'Matrix inversion failed!'
+   end if 
   end function inv
 
 DOUBLE PRECISION FUNCTION pythag(a,b)
@@ -202,7 +214,7 @@ DOUBLE PRECISION FUNCTION pythag(a,b)
   FUNCTION matinv4(A) result(B)
     !! Performs a direct calculation of the inverse of a 4×4 matrix.
     double precision, intent(in) :: A(4,4)   !! Matrix
-    double precision           :: B(4,4)   !! Inverse matrix
+    double precision           :: B(4,4),unity(4,4)   !! Inverse matrix
     double precision             :: detinv, one, two, three, four 
     ! Calculate the inverse determinant of the matrix
     !detinv = &
@@ -235,6 +247,11 @@ DOUBLE PRECISION FUNCTION pythag(a,b)
     B(2,4) = detinv*(A(1,1)*(A(2,3)*A(3,4)-A(2,4)*A(3,3))+A(1,3)*(A(2,4)*A(3,1)-A(2,1)*A(3,4))+A(1,4)*(A(2,1)*A(3,3)-A(2,3)*A(3,1)))
     B(3,4) = detinv*(A(1,1)*(A(2,4)*A(3,2)-A(2,2)*A(3,4))+A(1,2)*(A(2,1)*A(3,4)-A(2,4)*A(3,1))+A(1,4)*(A(2,2)*A(3,1)-A(2,1)*A(3,2)))
     B(4,4) = detinv*(A(1,1)*(A(2,2)*A(3,3)-A(2,3)*A(3,2))+A(1,2)*(A(2,3)*A(3,1)-A(2,1)*A(3,3))+A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1)))
+    unity = MATMUL(B,A)
+    IF (unity(1,1) + unity(2,2) + unity(3,3) + unity(4,4) - 4.D0 > 0.01) THEN
+      print*, "UNITY?", unity
+      stop
+    END IF 
  END FUNCTION
 function linspace(start,end,num,endpoint,step) result(samples)
         
