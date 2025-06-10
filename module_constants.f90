@@ -47,6 +47,8 @@ MODULE constants
   DOUBLE PRECISION, PARAMETER :: c2cgs           = 6.15D-4              ! for neutrino processes  
   DOUBLE PRECISION, PARAMETER :: c3cgs           = 5.04D-10
   DOUBLE PRECISION, PARAMETER :: m0c2            = amu*c_light2         ! atomic mass unit in energy units
+  DOUBLE PRECISION, PARAMETER :: baryon_fm3_to_cgs = 1.6724338D15
+
   
   ! conversion factors
   DOUBLE PRECISION, PARAMETER :: fm2cm           = 1.D-13

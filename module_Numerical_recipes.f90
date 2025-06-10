@@ -56,12 +56,13 @@ CONTAINS
     DO i = 1, size(A,1)
       err = err + trace(i,i)
     END DO 
-    IF ((info /= 0) .OR. (ABS(err) - size(A,1) > 0.001)) THEN
+    !print*, "matrix  ", err
+    IF ((info /= 0) .OR. (ABS(err) - size(A,1) > 0.0001)) THEN
       call dgesvd('All','All',m,n,A,lda,s,u,ldu,vt,ldvt,work,lwork,info)
       print*, " ---- SVD ---- "
       sigma_inv = 0.d0
       DO i = 1, size(A,1)
-        IF (s(i) >= 1e-9) THEN 
+        IF (s(i) >= 1e-12) THEN 
           sigma_inv(i,i) = 1.D0 / s(i)
         ELSE 
           sigma_inv(i,i) = 0.D0
@@ -299,4 +300,20 @@ function linspace(start,end,num,endpoint,step) result(samples)
             samples(i) = start + (i-1)*step_
         end do
     end function linspace
+
+
+    function logspace(start, stop, num) result(output)
+        implicit none
+        real(8), intent(in) :: start, stop
+        integer, intent(in) :: num
+        real(8) :: output(num)
+        integer :: i
+        real(8) :: exponent
+
+        do i = 1, num
+          exponent = start + (i - 1) * (stop - start) / (num - 1)
+          output(i) = 10.0d0 **exponent
+        end do
+  end function logspace
+
 END MODULE NR

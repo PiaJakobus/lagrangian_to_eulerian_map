@@ -5,12 +5,14 @@ flag = -O0 -fbounds-check -mcmodel=large -r16 -g -fbacktrace -fbounds-check \
 
 
 # Library paths (adjust these if the libraries are in non-standard locations)
-#LAPACK_PATH = /usr/lib/x86_64-linux-gnu   # Adjust if LAPACK is in a non-standard location
-#BLAS_PATH = /usr/lib/x86_64-linux-gnu     # Adjust if BLAS is in a non-standard location
+#LAPACK_PATH = /usr/lib/x86_64-linux-gnu/liblapack.so.3   # Adjust if LAPACK is in a non-standard location
+#BLAS_PATH = /usr/lib/x86_64-linux-gnu/libblas.so.3     # Adjust if BLAS is in a non-standard location
 
 # LAPACK and BLAS libraries
 #LIBS = -L$(LAPACK_PATH) -llapack -L$(BLAS_PATH) -lblas
-LIBS = -llapack -lblas
+LIBS = /usr/lib/x86_64-linux-gnu/liblapack.so.3 /usr/lib/x86_64-linux-gnu/libblas.so.3
+
+#LIBS = -llapack -lblas
 
 SRC = module_constants.f90 module_Numerical_recipes.f90 module_kernel.f90 module_LRE.f90  \
 			module_set_up.f90 IO.f90 module_units.f90 module_constants.f90 module_reading_dep.f90 \

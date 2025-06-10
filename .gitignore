@@ -37,3 +37,5 @@
 *.png
 *.swp
 data/*
+output/*
+plots/*

@@ -15,7 +15,7 @@ MODULE units
   DOUBLE PRECISION c_light_cu5,Temp_fac
   DOUBLE PRECISION time_cu_to_s,time_cu_to_ms
   DOUBLE PRECISION time_cu_to_min,time_cu_to_hour
-  DOUBLE PRECISION m0c2_cu,ud3
+  DOUBLE PRECISION m0c2_cu,ud3, rho_cu_fm_3
 
 
 CONTAINS
@@ -106,6 +106,9 @@ CONTAINS
 
     ! baryon rest mass energy in code units
     m0c2_cu= m0c2/uerg
+    ! rho (c.u.) to #baryons/fm^3
+    rho_cu_fm_3= udens*fm2cm**3/amu
+
 
   END SUBROUTINE set_units
   

@@ -129,9 +129,9 @@ MODULE SET_UP
     INTEGER :: i, j, k, ig  ! Loop indices and grid point counter
 
     range_ = linspace(-border, border, ni_grid)  ! Create evenly spaced grid points within boundary
-    range_x = linspace(-150.d0,150.d0,ni_grid)
-    range_z = linspace(-5.d0,5.d0,ni_grid)
-    range_y = linspace(-270.d0,60.d0,ni_grid)
+    range_x = linspace(0.d0,30.d0,ni_grid)
+    range_z = linspace(0.d0,30.d0,ni_grid)
+    range_y = linspace(0.d0,30.d0,ni_grid)
 
 
     ! If ni_grid is 1, set range to zero (single point)
@@ -145,15 +145,16 @@ MODULE SET_UP
         DO k = 1, ni_grid
           ig = ig + 1
           ! Assign grid points based on range
-          x_grid(1, ig) = range_x(k)
-          x_grid(2, ig) = range_y(j)
-          x_grid(3, ig) = range_z(i)
+          x_grid(1, ig) = range_(k)
+          x_grid(2, ig) = range_(j)
+          x_grid(3, ig) = range_(i)
         END DO
       END DO
     END DO
   END SUBROUTINE generate_grid
 
-  SUBROUTINE generate_polar(x_grid, rdim, N_grid, border_r, ni_grid_r,ni_grid_th,ni_grid_ph)
+  SUBROUTINE generate_polar(x_grid, rdim, N_grid, border_r, ni_grid_r,ni_grid_th,&
+                  &ni_grid_ph, range_r,range_th,range_ph)
 
     !***************************************
     !                                      * 
@@ -174,35 +175,35 @@ MODULE SET_UP
     INTEGER, INTENT(IN) :: rdim, N_grid, ni_grid_r,ni_grid_ph,ni_grid_th
     DOUBLE PRECISION, INTENT(IN) :: border_r
     DOUBLE PRECISION, INTENT(OUT) :: x_grid(rdim,N_grid)
-    DOUBLE PRECISION :: range_r(ni_grid_r) 
-    DOUBLE PRECISION :: range_th(ni_grid_th) 
-    DOUBLE PRECISION :: range_ph(ni_grid_ph) 
+    DOUBLE PRECISION,INTENT(OUT) :: range_r(ni_grid_r) 
+    DOUBLE PRECISION,INTENT(OUT) :: range_th(ni_grid_th) 
+    DOUBLE PRECISION,INTENT(OUT) :: range_ph(ni_grid_ph) 
     DOUBLE PRECISION, PARAMETER :: border_th = pi
     DOUBLE PRECISION, PARAMETER :: border_ph = 2.d0 * pi 
     INTEGER :: i, j, k, ig  ! Loop indices and grid point counter
     DOUBLE PRECISION :: dr, dtheta, dphi
-    dr = 250.D0 / (ni_grid_r - 1.D0)
+    dr = 0.05 !border_r / (ni_grid_r - 1.D0)
+    dr = 500.D0 !border_r / (ni_grid_r - 1.D0)
     dphi = 2.D0 * pi / (ni_grid_ph - 1.D0)
     dtheta = pi / (ni_grid_th)
 
-    range_r = linspace(dr, border_r, ni_grid_r)  ! Create evenly spaced grid points within boundary
-    range_ph = linspace(0.D0, border_ph-dphi, ni_grid_ph)  ! Create evenly spaced grid points within boundaARY
-    range_th = linspace(0.D0, border_th, ni_grid_th)  ! Create evenly spaced grid points within boundary
+    range_r = logspace(log10(dr), log10(border_r), ni_grid_r)  ! Create evenly spaced grid points within boundary
+    range_ph = linspace(-pi+0.017453D0, pi-0.017453D0, ni_grid_ph)  ! Create evenly spaced grid points within boundaARY
+    range_th = linspace(0.017453D0, pi-0.017453D0, ni_grid_th)  ! Create evenly spaced grid points within boundary
 
     ig = 0  ! Initialize grid point counter
-    DO i = 1, ni_grid_r
-      DO k = 1, ni_grid_ph
-        DO j = 1, ni_grid_th
+    DO i = 1, ni_grid_ph
+      DO j = 1, ni_grid_th
+        DO k = 1, ni_grid_r
           ig = ig + 1
           ! Assign grid points based on range
-          x_grid(1, ig) = range_r(i)
-          x_grid(2, ig) = range_ph(k)
-          x_grid(3, ig) = range_th(j)
+          x_grid(1, ig) = range_r(k)
+          x_grid(2, ig) = range_th(j)
+          x_grid(3, ig) = range_ph(i)
         END DO
       END DO
     END DO
   END SUBROUTINE generate_polar
-
 
   SUBROUTINE xy_plane(x_grid, N_grid, border, ni_grid)
     !***************************************
