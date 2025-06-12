@@ -35,7 +35,7 @@ PROGRAM main
   ! === If polar = true then you need to comment in this: ===
   !INTEGER, PARAMETER           :: N_grid       = ni_grid * ni_grid * ni_grid
   INTEGER, PARAMETER           :: N_variable   = 5
-  INTEGER, PARAMETER           :: INT_param    = NN3D_lin
+  INTEGER, PARAMETER           :: INT_param    = NN3D_cub
   DOUBLE PRECISION, PARAMETER  :: border_g     = 30.d0
   DOUBLE PRECISION, PARAMETER  :: border_r     = 5000.d0
 
@@ -43,6 +43,7 @@ PROGRAM main
   INTEGER                      :: stat, i, i_g, k, l
   INTEGER                      :: zaehler, zaehler0
   INTEGER                      :: N
+  INTEGER                      :: cut_off      = 100
 
   DOUBLE PRECISION             :: T1, T2
   DOUBLE PRECISION             :: x, y, z, vx, vy, vz, dist, xy
@@ -118,12 +119,12 @@ PROGRAM main
 
 !$OMP PARALLEL DO DEFAULT(NONE) &
 !$OMP& PRIVATE(i_g, B, moment_matrix, f_grid, vx, vy, vz, xy, f_grid_pol, dist, x, y, z, zaehler, zaehler0) &
-!$OMP& SHARED(r_grid, fp, r_particles, N, f_grid_vec, h, pmass, rho, h_subst, unbound_list)
+!$OMP& SHARED(r_grid, fp, r_particles, N, f_grid_vec, h, pmass, rho, h_subst, unbound_list,cut_off)
   DO i_g = 1, N_grid
     CALL get_grid_value(i_g, INT_param, rdim, N_variable, zaehler, zaehler0, &
                         fp, N, r_grid, N_grid, f_grid_vec, rho(unbound_list), &
                         pmass(unbound_list), h(unbound_list), moment_matrix, r_particles, &
-                        unbound_list, f_grid, B, polar)
+                        unbound_list, f_grid, B, polar,cut_off)
 
     IF (polar) THEN
       CALL to_polar(r_grid(:, i_g), rdim, N_variable, c_light, dist, f_grid_vec(i_g,:), f_grid_pol)

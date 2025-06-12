@@ -129,9 +129,9 @@ MODULE SET_UP
     INTEGER :: i, j, k, ig  ! Loop indices and grid point counter
 
     range_ = linspace(-border, border, ni_grid)  ! Create evenly spaced grid points within boundary
-    range_x = linspace(0.d0,30.d0,ni_grid)
-    range_z = linspace(0.d0,30.d0,ni_grid)
-    range_y = linspace(0.d0,30.d0,ni_grid)
+    !range_x = linspace(0.d0,30.d0,ni_grid)
+    !range_z = linspace(0.d0,30.d0,ni_grid)
+    !range_y = linspace(0.d0,30.d0,ni_grid)
 
 
     ! If ni_grid is 1, set range to zero (single point)

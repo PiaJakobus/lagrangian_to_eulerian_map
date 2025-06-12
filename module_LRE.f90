@@ -278,7 +278,7 @@ MODULE LRE
 
   SUBROUTINE get_grid_value(i_g, INT_param, rdim, N_variable, zaehler, zaehler0, &
                            fp, N, r_grid, N_grid, f_grid_vec, rho_red, pmass_red, h_red, &
-                           moment_matrix, r_particles, unbound_list, f_grid, B, polar)
+                           moment_matrix, r_particles, unbound_list, f_grid, B, polar,cut_off)
     !=============================================================
     ! Compute grid values for each variable at a specific grid point.
     !
@@ -309,7 +309,7 @@ MODULE LRE
     !=============================================================
 
     INTEGER, INTENT(IN)             :: i_g, N, N_variable, N_grid, rdim, INT_param
-    INTEGER, INTENT(IN)             :: unbound_list(N)
+    INTEGER, INTENT(IN)             :: unbound_list(N), cut_off
     INTEGER, INTENT(INOUT)          :: zaehler, zaehler0
     DOUBLE PRECISION, INTENT(IN)    :: fp(N, N_variable), r_grid(rdim, N_grid)
     DOUBLE PRECISION, INTENT(IN)    :: rho_red(N), pmass_red(N), h_red(N)
@@ -326,7 +326,7 @@ MODULE LRE
                                 h_red, rho_red, pmass_red, polar, zaehler)
 
     DO k = 1, N_variable
-      IF (zaehler <= 10) THEN
+      IF (zaehler <= cut_off) THEN
         h_subst = 2.5D0 * h_red
         CALL standard_SPH(fp(:, k), N, r_particles, r_grid(:, i_g), rdim, h_subst, &
                           rho_red, pmass_red, f_grid, polar, zaehler0)
@@ -403,6 +403,7 @@ MODULE LRE
     !
     ! Output:
     !   bases_3D_lin  - Linear basis function values
+    ! This subroutine is by Stephan Rosswog, edited by Pia Jakobus 
     !=============================================================
 
     DOUBLE PRECISION, INTENT(IN)  :: pos(3), pos0(3)
@@ -436,6 +437,7 @@ MODULE LRE
     !
     ! Output:
     !   bases_3D_quad    - Evaluated quadratic basis functions
+    ! This subroutine is by Stephan Rosswog, edited by Pia Jakobus 
     !=============================================================
 
     DOUBLE PRECISION, INTENT(IN)  :: pos(3), pos0(3)
@@ -479,6 +481,7 @@ MODULE LRE
     !
     ! Output:
     !   bases_3D_cubic   - Evaluated cubic basis functions
+    ! This subroutine is by Stephan Rosswog, edited by Pia Jakobus 
     !=============================================================
 
     DOUBLE PRECISION, INTENT(IN)  :: pos(3), pos0(3)
